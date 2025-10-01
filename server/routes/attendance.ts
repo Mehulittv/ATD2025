@@ -149,7 +149,7 @@ function summarizeRow(ws: XLSX.WorkSheet, rowIndex: number): AttendanceSummary {
   let absent = 0;
   let weekoff = 0;
   let otHours = 0;
-  // daily values start dynamically based on detected header
+  // daily values start dynamically based on detected daily pattern at the employee row
   const startCol = detectFirstDayCol(ws, rowIndex);
   const lastDayCol = Math.min(range.e.c, startCol + 30);
   for (let c = startCol; c <= lastDayCol; c++) {
