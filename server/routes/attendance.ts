@@ -13,34 +13,28 @@ import { getFilePath } from "./files";
 
 export const attendanceRouter = Router();
 
-function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
-  // Heuristic: detect start of daily columns from the employee row itself
+function detectFirstDayCol(ws: XLSX.WorkSheet, _dataRowIndex: number): number {
+  // Robust: find a header row with a long 1..31 numeric sequence and use its start column
   const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
   const maxC = range.e.c;
-  const otRow = dataRowIndex + 1;
-  let bestCol = 3; // default near D
-  let bestScore = -1;
-  for (let c = 3; c <= Math.min(maxC, 20); c++) {
-    let score = 0;
-    let codeHits = 0;
-    for (let d = 0; d < 10 && c + d <= maxC; d++) {
-      const v = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v).toUpperCase();
-      const cls = classifyCell(v);
-      if (cls.present || cls.absent || cls.weekoff) {
-        score += 3;
-        codeHits++;
-      } else if (!v) {
-        score += 1; // blanks are common in daily grid
-      } else if (v.length > 3) {
-        score -= 3; // likely non-day text (e.g., Department)
+  let bestCol = 3; // default to D if not found
+  let bestLen = -1;
+  const rowLimit = Math.min(range.e.r, 80); // scan top area for headers
+  for (let r = 0; r <= rowLimit; r++) {
+    for (let c = 0; c <= maxC; c++) {
+      let len = 0;
+      for (let d = 1; d <= 31 && c + d - 1 <= maxC; d++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: c + d - 1 })];
+        const raw = normalizeStr(cell?.v);
+        const n = Number.parseInt(raw, 10);
+        if (!Number.isNaN(n) && n === d) len++;
+        else break;
       }
-      const otV = normalizeStr(ws[XLSX.utils.encode_cell({ r: otRow, c: c + d })]?.v);
-      if (otV && !Number.isNaN(Number.parseFloat(otV))) score += 1;
-    }
-    if (codeHits < 2) score -= 5; // ensure it's really a daily region
-    if (score > bestScore) {
-      bestScore = score;
-      bestCol = c;
+      if (len > bestLen) {
+        bestLen = len;
+        bestCol = c;
+      }
+      if (bestLen >= 10) return bestCol; // good enough
     }
   }
   return bestCol;
