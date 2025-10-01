@@ -65,18 +65,13 @@ function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
 
     // If not present inline, look for OT value on the next row (rowIndex + 1) in the same day column
     if (!ot || Number.isNaN(ot)) {
-      // Only use next row as OT row if it doesn't contain employee number/name in B/C
-      const nextB = normalizeStr(ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c: 1 })]?.v);
-      const nextC = normalizeStr(ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c: 2 })]?.v);
-      const nextLooksLikeOTRow = isIgnored(nextB) && isIgnored(nextC);
-      if (nextLooksLikeOTRow) {
-        const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
-        const nextVal = normalizeStr(nextCell?.v).toUpperCase();
-        const m = nextVal.match(/([0-9]+(?:\.[0-9]+)?)/);
-        if (m) {
-          const parsedNext = Number.parseFloat(m[1]);
-          if (!Number.isNaN(parsedNext)) ot = parsedNext;
-        }
+      // Fallback: try next row (assumed OT row for the same employee), parse any numeric value
+      const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
+      const nextVal = normalizeStr(nextCell?.v).toUpperCase();
+      const m = nextVal.match(/([0-9]+(?:\.[0-9]+)?)/);
+      if (m) {
+        const parsedNext = Number.parseFloat(m[1]);
+        if (!Number.isNaN(parsedNext)) ot = parsedNext;
       }
     }
 
