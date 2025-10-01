@@ -526,8 +526,8 @@ export default function Index() {
                           >
                             {cell ? (
                               <div className="p-2 space-y-1 text-center">
-                                <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
-                                  {cell.day}
+                                <div className="text-xs font-bold">
+                                  {meta ? new Date(meta.year, meta.monthIndex, cell.day).toLocaleDateString(undefined, { weekday: "long" }) : ""}
                                 </div>
                                 <div
                                   className={
@@ -537,8 +537,8 @@ export default function Index() {
                                 >
                                   {cell.code || ""}
                                 </div>
-                                <div className="text-xs font-semibold text-muted-foreground">
-                                  {cell.ot ? `OT: ${cell.ot}` : ""}
+                                <div className="text-xs font-bold">
+                                  {cell.ot ? cell.ot : ""}
                                 </div>
                               </div>
                             ) : (
