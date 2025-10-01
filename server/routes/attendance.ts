@@ -14,28 +14,33 @@ import { getFilePath } from "./files";
 export const attendanceRouter = Router();
 
 function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
+  // Heuristic: detect start of daily columns from the employee row itself
   const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
   const maxC = range.e.c;
-  let bestCol = 3; // default to D
+  const otRow = dataRowIndex + 1;
+  let bestCol = 3; // default near D
   let bestScore = -1;
-  const startR = Math.max(0, dataRowIndex - 5);
-  const endR = Math.max(0, dataRowIndex);
-  for (let r = startR; r <= endR; r++) {
-    for (let c = 0; c <= maxC; c++) {
-      let score = 0;
-      for (let d = 1; d <= 31; d++) {
-        const cell = ws[XLSX.utils.encode_cell({ r, c: c + d - 1 })];
-        const raw = normalizeStr(cell?.v);
-        if (!raw) break;
-        const n = Number.parseInt(String(raw), 10);
-        if (!Number.isNaN(n) && n === d) score++;
-        else break;
+  for (let c = 3; c <= Math.min(maxC, 20); c++) {
+    let score = 0;
+    let codeHits = 0;
+    for (let d = 0; d < 10 && c + d <= maxC; d++) {
+      const v = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v).toUpperCase();
+      const cls = classifyCell(v);
+      if (cls.present || cls.absent || cls.weekoff) {
+        score += 3;
+        codeHits++;
+      } else if (!v) {
+        score += 1; // blanks are common in daily grid
+      } else if (v.length > 3) {
+        score -= 3; // likely non-day text (e.g., Department)
       }
-      if (score > bestScore) {
-        bestScore = score;
-        bestCol = c;
-      }
-      if (bestScore >= 7) return bestCol; // good enough sequence found
+      const otV = normalizeStr(ws[XLSX.utils.encode_cell({ r: otRow, c: c + d })]?.v);
+      if (otV && !Number.isNaN(Number.parseFloat(otV))) score += 1;
+    }
+    if (codeHits < 2) score -= 5; // ensure it's really a daily region
+    if (score > bestScore) {
+      bestScore = score;
+      bestCol = c;
     }
   }
   return bestCol;
