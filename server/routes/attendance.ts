@@ -13,10 +13,39 @@ import { getFilePath } from "./files";
 
 export const attendanceRouter = Router();
 
+function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  const maxC = range.e.c;
+  let bestCol = 3; // default to D
+  let bestScore = -1;
+  const startR = Math.max(0, dataRowIndex - 5);
+  const endR = Math.max(0, dataRowIndex);
+  for (let r = startR; r <= endR; r++) {
+    for (let c = 0; c <= maxC; c++) {
+      let score = 0;
+      for (let d = 1; d <= 31; d++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: c + d - 1 })];
+        const raw = normalizeStr(cell?.v);
+        if (!raw) break;
+        const n = Number.parseInt(String(raw), 10);
+        if (!Number.isNaN(n) && n === d) score++;
+        else break;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestCol = c;
+      }
+      if (bestScore >= 7) return bestCol; // good enough sequence found
+    }
+  }
+  return bestCol;
+}
+
 function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
   const days: DayStatus[] = [];
+  const startCol = detectFirstDayCol(ws, rowIndex);
   for (let day = 1; day <= 31; day++) {
-    const c = 3 + (day - 1); // D..AH
+    const c = startCol + (day - 1); // dynamic start for day 1
     const cell = ws[XLSX.utils.encode_cell({ r: rowIndex, c })];
     const cls = classifyCell(cell?.v);
     let code: DayStatus["code"] = "";
@@ -120,9 +149,10 @@ function summarizeRow(ws: XLSX.WorkSheet, rowIndex: number): AttendanceSummary {
   let absent = 0;
   let weekoff = 0;
   let otHours = 0;
-  // daily values start from D (3) through AH (33) => 31 days
-  const lastDayCol = Math.min(range.e.c, 33);
-  for (let c = 3; c <= lastDayCol; c++) {
+  // daily values start dynamically based on detected header
+  const startCol = detectFirstDayCol(ws, rowIndex);
+  const lastDayCol = Math.min(range.e.c, startCol + 30);
+  for (let c = startCol; c <= lastDayCol; c++) {
     const cell = ws[XLSX.utils.encode_cell({ r: rowIndex, c })];
     const cls = classifyCell(cell?.v);
     present += cls.present;
