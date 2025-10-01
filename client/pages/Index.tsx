@@ -526,9 +526,6 @@ export default function Index() {
                           >
                             {cell ? (
                               <div className="p-2 space-y-1 text-center">
-                                <div className="text-xs font-bold">
-                                  {meta ? new Date(meta.year, meta.monthIndex, cell.day).toLocaleDateString(undefined, { weekday: "long" }) : ""}
-                                </div>
                                 <div
                                   className={
                                   "text-sm font-bold " +
