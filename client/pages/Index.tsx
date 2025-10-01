@@ -526,6 +526,9 @@ export default function Index() {
                           >
                             {cell ? (
                               <div className="p-2 space-y-1 text-center">
+                                <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
+                                  {cell.day}
+                                </div>
                                 <div
                                   className={
                                   "text-sm font-bold " +
