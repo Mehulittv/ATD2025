@@ -146,7 +146,7 @@ function classifyCell(raw: any) {
   if (s === "P" || s.startsWith("P/") || s === "PR" || s === "PRESENT")
     present = 1;
   else if (s === "A" || s === "ABSENT") absent = 1;
-  else if (s === "WO" || s === "W/O" || s === "WEEKOFF" || s === "WEEK OFF")
+  else if (s === "W" || s === "WO" || s === "W/O" || s === "WEEKOFF" || s === "WEEK OFF")
     weekoff = 1;
 
   return { present, absent, weekoff, ot } as const;
