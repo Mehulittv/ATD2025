@@ -23,10 +23,20 @@ function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
     if (cls.weekoff) code = "WO";
     else if (cls.absent) code = "A";
     else if (cls.present) code = "P";
-    const otMatch = normalizeStr(cell?.v)
-      .toUpperCase()
-      .match(/OT\s*([0-9]+(?:\.[0-9]+)?)?/);
-    const ot = otMatch && otMatch[1] ? parseFloat(otMatch[1]) : 0;
+
+    // Try to read OT from the same cell (e.g., "P OT 2")
+    const sameCell = normalizeStr(cell?.v).toUpperCase();
+    const otInlineMatch = sameCell.match(/OT\s*([0-9]+(?:\.[0-9]+)?)?/);
+    let ot = otInlineMatch && otInlineMatch[1] ? parseFloat(otInlineMatch[1]) : 0;
+
+    // If not present inline, look for OT value on the next row (rowIndex + 1) in the same day column
+    if (!ot || Number.isNaN(ot)) {
+      const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
+      const nextVal = normalizeStr(nextCell?.v);
+      const parsedNext = Number.parseFloat(nextVal);
+      if (!Number.isNaN(parsedNext)) ot = parsedNext;
+    }
+
     days.push({ day, code, ot: Number.isNaN(ot) ? 0 : ot });
   }
   return days;
