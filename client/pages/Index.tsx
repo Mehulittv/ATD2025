@@ -531,14 +531,14 @@ export default function Index() {
                                 </div>
                                 <div
                                   className={
-                                  "text-sm font-bold " +
-                                  codeColor(cell.code)
-                                }
+                                    "text-sm font-bold " +
+                                    codeColor(cell.code)
+                                  }
                                 >
-                                  {cell.code || ""}
+                                  {cell.code === "WO" ? "W" : (cell.code || "")}
                                 </div>
                                 <div className="text-xs font-bold">
-                                  {cell.ot ? cell.ot : ""}
+                                  {cell.ot > 0 ? cell.ot : ""}
                                 </div>
                               </div>
                             ) : (
