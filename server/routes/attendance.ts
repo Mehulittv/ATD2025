@@ -65,10 +65,16 @@ function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
 
     // If not present inline, look for OT value on the next row (rowIndex + 1) in the same day column
     if (!ot || Number.isNaN(ot)) {
-      const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
-      const nextVal = normalizeStr(nextCell?.v);
-      const parsedNext = Number.parseFloat(nextVal);
-      if (!Number.isNaN(parsedNext)) ot = parsedNext;
+      // Only use next row as OT row if it doesn't contain employee number/name in B/C
+      const nextB = normalizeStr(ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c: 1 })]?.v);
+      const nextC = normalizeStr(ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c: 2 })]?.v);
+      const nextLooksLikeOTRow = isIgnored(nextB) && isIgnored(nextC);
+      if (nextLooksLikeOTRow) {
+        const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
+        const nextVal = normalizeStr(nextCell?.v);
+        const parsedNext = Number.parseFloat(nextVal);
+        if (!Number.isNaN(parsedNext)) ot = parsedNext;
+      }
     }
 
     days.push({ day, code, ot: Number.isNaN(ot) ? 0 : ot });
