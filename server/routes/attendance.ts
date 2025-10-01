@@ -71,9 +71,12 @@ function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
       const nextLooksLikeOTRow = isIgnored(nextB) && isIgnored(nextC);
       if (nextLooksLikeOTRow) {
         const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
-        const nextVal = normalizeStr(nextCell?.v);
-        const parsedNext = Number.parseFloat(nextVal);
-        if (!Number.isNaN(parsedNext)) ot = parsedNext;
+        const nextVal = normalizeStr(nextCell?.v).toUpperCase();
+        const m = nextVal.match(/([0-9]+(?:\.[0-9]+)?)/);
+        if (m) {
+          const parsedNext = Number.parseFloat(m[1]);
+          if (!Number.isNaN(parsedNext)) ot = parsedNext;
+        }
       }
     }
 
