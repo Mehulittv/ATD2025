@@ -367,7 +367,7 @@ export default function Index() {
               <label className="mb-2 block text-sm font-medium">
                 Total employees
               </label>
-              <div className="rounded-md border p-3 text-3xl font-extrabold tracking-tight bg-card">
+              <div className="rounded-md border p-3 text-3xl font-extrabold tracking-tight bg-card text-center">
                 {totalEmployees}
               </div>
             </div>
@@ -415,7 +415,7 @@ export default function Index() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div className="font-bold text-base">
+                      <div className="font-bold text-base text-center">
                         {summaryQuery.data.employee.number}
                       </div>
                     </CardContent>
@@ -427,7 +427,7 @@ export default function Index() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div className="font-bold text-base">
+                      <div className="font-bold text-base text-center">
                         {summaryQuery.data.employee.name}
                       </div>
                     </CardContent>
@@ -439,7 +439,7 @@ export default function Index() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div className="font-bold text-base">
+                      <div className="font-bold text-base text-center">
                         {summaryQuery.data.details?.department || "-"}
                       </div>
                     </CardContent>
@@ -486,39 +486,10 @@ export default function Index() {
               </>
             )}
 
-            {summaryQuery.data?.details && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-muted-foreground">
-                      Mobile
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <div>{summaryQuery.data.details.mobile1 || "-"}</div>
-                    <div>{summaryQuery.data.details.mobile2 || ""}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-muted-foreground">
-                      Present Address
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <div className="whitespace-pre-wrap">
-                      {summaryQuery.data.details.presentAddress || "-"}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
             {dailyQuery.data && (
               <div className="mt-6 rounded-md border overflow-hidden">
-                <div className="flex items-center justify-between bg-emerald-500 text-white font-semibold px-4 py-2">
-                  <span>Monthly Calendar</span>
-                  <span className="text-white/90 text-sm">
+                <div className="flex items-center justify-center bg-emerald-500 text-white font-semibold px-4 py-2">
+                  <span className="text-base sm:text-lg">
                     {parseMonthYear(
                       files.find((f) => f.filename === file)?.originalName,
                     )?.label || ""}
@@ -554,19 +525,19 @@ export default function Index() {
                             className="min-h-[76px] rounded-md border bg-card"
                           >
                             {cell ? (
-                              <div className="p-2 space-y-1">
+                              <div className="p-2 space-y-1 text-center">
                                 <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
                                   {cell.day}
                                 </div>
                                 <div
                                   className={
-                                    "text-xs font-medium " +
-                                    codeColor(cell.code)
-                                  }
+                                  "text-sm font-bold " +
+                                  codeColor(cell.code)
+                                }
                                 >
                                   {cell.code || ""}
                                 </div>
-                                <div className="text-xs text-muted-foreground">
+                                <div className="text-xs font-semibold text-muted-foreground">
                                   {cell.ot ? `OT: ${cell.ot}` : ""}
                                 </div>
                               </div>
@@ -579,6 +550,33 @@ export default function Index() {
                     ));
                   })()}
                 </div>
+              </div>
+            )}
+            {summaryQuery.data?.details && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-muted-foreground">
+                      Mobile
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm">
+                    <div>{summaryQuery.data?.details?.mobile1 || "-"}</div>
+                    <div>{summaryQuery.data?.details?.mobile2 || ""}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-muted-foreground">
+                      Present Address
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm">
+                    <div className="whitespace-pre-wrap">
+                      {summaryQuery.data?.details?.presentAddress || "-"}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </div>
@@ -684,7 +682,7 @@ function StatCard({
         <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-extrabold tracking-tight">
+        <div className="text-3xl font-extrabold tracking-tight text-center">
           <span
             className={
               color + " inline-block h-3 w-3 rounded-full align-middle mr-2"
