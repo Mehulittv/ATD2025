@@ -326,13 +326,21 @@ export default function Index() {
             <RadioGroup
               className="flex flex-row items-center gap-4"
               value={layout}
-              onValueChange={(v) => setLayout((v as any) as "horizontal" | "vertical")}
+              onValueChange={(v) =>
+                setLayout(v as any as "horizontal" | "vertical")
+              }
             >
-              <label htmlFor="layout-h" className="inline-flex items-center gap-2 text-xs text-foreground/80">
+              <label
+                htmlFor="layout-h"
+                className="inline-flex items-center gap-2 text-xs text-foreground/80"
+              >
                 <RadioGroupItem id="layout-h" value="horizontal" />
                 <span>Horizontal</span>
               </label>
-              <label htmlFor="layout-v" className="inline-flex items-center gap-2 text-xs text-foreground/80">
+              <label
+                htmlFor="layout-v"
+                className="inline-flex items-center gap-2 text-xs text-foreground/80"
+              >
                 <RadioGroupItem id="layout-v" value="vertical" />
                 <span>Vertical</span>
               </label>
@@ -425,7 +433,13 @@ export default function Index() {
           <div ref={captureRef} className="space-y-4">
             {summaryQuery.data && (
               <>
-                <div className={layout === "vertical" ? "grid gap-4 grid-cols-1" : "grid gap-4 sm:grid-cols-3"}>
+                <div
+                  className={
+                    layout === "vertical"
+                      ? "grid gap-4 grid-cols-1"
+                      : "grid gap-4 sm:grid-cols-3"
+                  }
+                >
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm text-muted-foreground">
@@ -464,7 +478,13 @@ export default function Index() {
                   </Card>
                 </div>
 
-                <div className={layout === "vertical" ? "grid gap-4 grid-cols-1" : "grid gap-4 sm:grid-cols-7"}>
+                <div
+                  className={
+                    layout === "vertical"
+                      ? "grid gap-4 grid-cols-1"
+                      : "grid gap-4 sm:grid-cols-7"
+                  }
+                >
                   <StatCard
                     title="Present"
                     value={summaryQuery.data.summary.present}
@@ -555,7 +575,9 @@ export default function Index() {
                                         codeColor(cell.code)
                                       }
                                     >
-                                      {cell.code === "WO" ? "W" : (cell.code || "")}
+                                      {cell.code === "WO"
+                                        ? "W"
+                                        : cell.code || ""}
                                     </div>
                                     <div className="text-xs font-bold">
                                       {cell.ot > 0 ? cell.ot : ""}
@@ -590,14 +612,26 @@ export default function Index() {
                                   {d.day}
                                 </div>
                                 <div className="text-sm font-semibold text-white/90">
-                                  {meta && typeof meta.year === "number" && typeof meta.monthIndex === "number"
-                                    ? new Date(meta.year, meta.monthIndex, d.day).toLocaleDateString(undefined, { weekday: "long" })
+                                  {meta &&
+                                  typeof meta.year === "number" &&
+                                  typeof meta.monthIndex === "number"
+                                    ? new Date(
+                                        meta.year,
+                                        meta.monthIndex,
+                                        d.day,
+                                      ).toLocaleDateString(undefined, {
+                                        weekday: "long",
+                                      })
                                     : `Day ${d.day}`}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className={"text-base font-bold " + codeColor(d.code)}>
-                                  {d.code === "WO" ? "W" : (d.code || "")}
+                                <div
+                                  className={
+                                    "text-base font-bold " + codeColor(d.code)
+                                  }
+                                >
+                                  {d.code === "WO" ? "W" : d.code || ""}
                                 </div>
                                 <div className="text-xs font-bold">
                                   {d.ot > 0 ? d.ot : ""}
@@ -654,15 +688,23 @@ export default function Index() {
       </Card>
       {sending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-[90%] max-w-sm rounded-lg border bg-card p-6 shadow-lg text-center" role="status" aria-live="polite">
-            <div className="mb-3 text-base font-semibold">Sending to WhatsApp...</div>
+          <div
+            className="w-[90%] max-w-sm rounded-lg border bg-card p-6 shadow-lg text-center"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="mb-3 text-base font-semibold">
+              Sending to WhatsApp...
+            </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-150"
                 style={{ width: `${Math.min(sendingProgress, 100)}%` }}
               />
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">Preparing image and contacting provider</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Preparing image and contacting provider
+            </div>
           </div>
         </div>
       )}

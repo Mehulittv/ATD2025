@@ -143,12 +143,10 @@ whatsappRouter.post("/image-url", async (req, res) => {
     const url = `${base}/i/${id}.${ext}`;
     res.json({ url });
   } catch (e: any) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to create image URL",
-        detail: e?.message || String(e),
-      });
+    res.status(500).json({
+      error: "Failed to create image URL",
+      detail: e?.message || String(e),
+    });
   }
 });
 
@@ -225,11 +223,9 @@ whatsappRouter.post("/send", async (req, res) => {
 
     res.json({ ok: true, response: result.body });
   } catch (e: any) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to send WhatsApp",
-        detail: e?.message || String(e),
-      });
+    res.status(500).json({
+      error: "Failed to send WhatsApp",
+      detail: e?.message || String(e),
+    });
   }
 });

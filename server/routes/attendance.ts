@@ -44,7 +44,9 @@ function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
     let score = 0;
     let hits = 0;
     for (let d = 0; d < 10 && c + d <= maxC; d++) {
-      const v = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v).toUpperCase();
+      const v = normalizeStr(
+        ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v,
+      ).toUpperCase();
       const cls = classifyCell(v);
       if (cls.present || cls.absent || cls.weekoff) {
         score += 3;
@@ -55,7 +57,9 @@ function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
         score -= 3; // likely not daily cell (e.g., text columns)
       }
       // Peek OT row below for numeric hints
-      const otV = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex + 1, c: c + d })]?.v);
+      const otV = normalizeStr(
+        ws[XLSX.utils.encode_cell({ r: dataRowIndex + 1, c: c + d })]?.v,
+      );
       if (otV && !Number.isNaN(Number.parseFloat(otV))) score += 1;
     }
     return { score, hits };
@@ -94,7 +98,8 @@ function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
     // Try to read OT from the same cell (e.g., "P OT 2")
     const sameCell = normalizeStr(cell?.v).toUpperCase();
     const otInlineMatch = sameCell.match(/OT\s*([0-9]+(?:\.[0-9]+)?)?/);
-    let ot = otInlineMatch && otInlineMatch[1] ? parseFloat(otInlineMatch[1]) : 0;
+    let ot =
+      otInlineMatch && otInlineMatch[1] ? parseFloat(otInlineMatch[1]) : 0;
 
     // If not present inline, look for OT value on the next row (rowIndex + 1) in the same day column
     if (!ot || Number.isNaN(ot)) {
@@ -179,7 +184,13 @@ function classifyCell(raw: any) {
   if (s === "P" || s.startsWith("P/") || s === "PR" || s === "PRESENT")
     present = 1;
   else if (s === "A" || s === "ABSENT") absent = 1;
-  else if (s === "W" || s === "WO" || s === "W/O" || s === "WEEKOFF" || s === "WEEK OFF")
+  else if (
+    s === "W" ||
+    s === "WO" ||
+    s === "W/O" ||
+    s === "WEEKOFF" ||
+    s === "WEEK OFF"
+  )
     weekoff = 1;
 
   return { present, absent, weekoff, ot } as const;
