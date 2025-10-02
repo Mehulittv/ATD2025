@@ -178,13 +178,11 @@ whatsappRouter.post("/send", async (req, res) => {
       let buffer: Buffer | null = null;
       let originalName = "attendance.png";
 
-      if (req.file && req.file.buffer) {
-        buffer = Buffer.from(
-          req.file.buffer.buffer,
-          req.file.buffer.byteOffset,
-          req.file.buffer.byteLength,
-        );
-        originalName = req.file.originalname || originalName;
+      if ((req as any).file && (req as any).file.buffer) {
+        // If a multipart/form-data file was sent and multer parsed it earlier
+        const f = (req as any).file;
+        buffer = Buffer.from(f.buffer);
+        originalName = f.originalname || originalName;
       } else if ((req.body as any)?.imageDataUrl) {
         const d = dataUrlToBuffer(String((req.body as any).imageDataUrl));
         buffer = d.buffer;
