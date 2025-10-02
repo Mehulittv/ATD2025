@@ -463,6 +463,11 @@ export default function Index() {
                     color="bg-amber-500"
                   />
                   <StatCard
+                    title="Minus"
+                    value={summaryQuery.data.summary.minus ?? 0}
+                    color="bg-fuchsia-500"
+                  />
+                  <StatCard
                     title="ATD"
                     value={summaryQuery.data.summary.atd}
                     color="bg-blue-500"
@@ -471,11 +476,6 @@ export default function Index() {
                     title="OT Hours"
                     value={summaryQuery.data.summary.otHours}
                     color="bg-cyan-500"
-                  />
-                  <StatCard
-                    title="Minus"
-                    value={summaryQuery.data.summary.minus ?? 0}
-                    color="bg-fuchsia-500"
                   />
                   <StatCard
                     title="Kitchen"
@@ -496,7 +496,7 @@ export default function Index() {
                   </span>
                 </div>
                 <div className="px-4 py-3">
-                  <div className="grid grid-cols-7 gap-2 text-xs font-medium text-muted-foreground mb-2">
+                  <div className="grid grid-cols-7 gap-2 text-xs font-bold text-white mb-2">
                     <div className="text-center">Sun</div>
                     <div className="text-center">Mon</div>
                     <div className="text-center">Tue</div>
