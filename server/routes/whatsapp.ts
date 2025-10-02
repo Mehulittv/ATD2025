@@ -160,7 +160,7 @@ function formatTo91(raw: any) {
 }
 
 // Send WhatsApp using provider that expects a URL-only 'file' parameter
-whatsappRouter.post("/send", upload.none(), async (req, res) => {
+whatsappRouter.post("/send", async (req, res) => {
   try {
     const { endpoint, appkey, authkey, to, message } = req.body || {};
     if (!endpoint || !appkey || !authkey || !to || !message) {
