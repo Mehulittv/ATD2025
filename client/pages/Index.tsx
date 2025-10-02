@@ -640,15 +640,10 @@ function parseMonthYear(name?: string | null) {
   return { year, monthIndex, label };
 }
 
-function buildCalendarCells(days: any[], year?: number, monthIndex?: number) {
+function buildCalendarCells(days: any[], _year?: number, _monthIndex?: number) {
+  // Fill strictly by day number (1..31) left-to-right; no leading weekday offset
   const sorted = [...(days || [])].sort((a, b) => a.day - b.day);
-  let leading = 0;
-  if (typeof year === "number" && typeof monthIndex === "number") {
-    leading = new Date(year, monthIndex, 1).getDay();
-  }
-  const cells: (any | null)[] = Array(Math.max(0, leading))
-    .fill(null)
-    .concat(sorted);
+  const cells: (any | null)[] = [...sorted];
   const trailing = (7 - (cells.length % 7)) % 7;
   for (let i = 0; i < trailing; i++) cells.push(null);
   return cells;
