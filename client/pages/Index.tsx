@@ -487,7 +487,7 @@ export default function Index() {
             )}
 
             {dailyQuery.data && (
-              <div className="mt-6 rounded-md border overflow-hidden">
+              <div className="mt-6 rounded-md border overflow-hidden bg-[#2A176A]">
                 <div className="flex items-center justify-center bg-emerald-500 text-white font-semibold px-4 py-2">
                   <span className="text-base sm:text-lg">
                     {parseMonthYear(
