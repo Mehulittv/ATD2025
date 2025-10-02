@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import {
@@ -30,6 +31,7 @@ import {
 export default function Index() {
   const captureRef = useRef<HTMLDivElement | null>(null);
   const [sending, setSending] = useState(false);
+  const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const [sendingProgress, setSendingProgress] = useState(0);
   useEffect(() => {
     if (!sending) {
@@ -319,7 +321,23 @@ export default function Index() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Search Employee</CardTitle>
+          <div className="flex items-center gap-4">
+            <CardTitle>Search Employee</CardTitle>
+            <RadioGroup
+              className="flex flex-row items-center gap-4"
+              value={layout}
+              onValueChange={(v) => setLayout((v as any) as "horizontal" | "vertical")}
+            >
+              <label htmlFor="layout-h" className="inline-flex items-center gap-2 text-xs text-foreground/80">
+                <RadioGroupItem id="layout-h" value="horizontal" />
+                <span>Horizontal</span>
+              </label>
+              <label htmlFor="layout-v" className="inline-flex items-center gap-2 text-xs text-foreground/80">
+                <RadioGroupItem id="layout-v" value="vertical" />
+                <span>Vertical</span>
+              </label>
+            </RadioGroup>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -407,7 +425,7 @@ export default function Index() {
           <div ref={captureRef} className="space-y-4">
             {summaryQuery.data && (
               <>
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className={layout === "vertical" ? "grid gap-4 grid-cols-1" : "grid gap-4 sm:grid-cols-3"}>
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm text-muted-foreground">
@@ -446,7 +464,7 @@ export default function Index() {
                   </Card>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-7">
+                <div className={layout === "vertical" ? "grid gap-4 grid-cols-1" : "grid gap-4 sm:grid-cols-7"}>
                   <StatCard
                     title="Present"
                     value={summaryQuery.data.summary.present}
