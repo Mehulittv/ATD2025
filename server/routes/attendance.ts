@@ -13,13 +13,14 @@ import { getFilePath } from "./files";
 
 export const attendanceRouter = Router();
 
-function detectFirstDayCol(ws: XLSX.WorkSheet, _dataRowIndex: number): number {
-  // Robust: find a header row with a long 1..31 numeric sequence and use its start column
+function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
   const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
   const maxC = range.e.c;
-  let bestCol = 3; // default to D if not found
+
+  // 1) Header-based detection
+  let headerCol = 3;
   let bestLen = -1;
-  const rowLimit = Math.min(range.e.r, 80); // scan top area for headers
+  const rowLimit = Math.min(range.e.r, 80);
   for (let r = 0; r <= rowLimit; r++) {
     for (let c = 0; c <= maxC; c++) {
       let len = 0;
@@ -32,12 +33,51 @@ function detectFirstDayCol(ws: XLSX.WorkSheet, _dataRowIndex: number): number {
       }
       if (len > bestLen) {
         bestLen = len;
-        bestCol = c;
+        headerCol = c;
       }
-      if (bestLen >= 10) return bestCol; // good enough
+      if (bestLen >= 10) break;
+    }
+    if (bestLen >= 10) break;
+  }
+
+  // 2) Row-based scoring for this employee row
+  const scoreStart = (c: number) => {
+    let score = 0;
+    let hits = 0;
+    for (let d = 0; d < 10 && c + d <= maxC; d++) {
+      const v = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v).toUpperCase();
+      const cls = classifyCell(v);
+      if (cls.present || cls.absent || cls.weekoff) {
+        score += 3;
+        hits++;
+      } else if (!v) {
+        score += 1;
+      } else if (v.length > 3) {
+        score -= 3;
+      }
+    }
+    return { score, hits };
+  };
+
+  let bestRowCol = 3;
+  let bestRowScore = -1e9;
+  let bestRowHits = 0;
+  for (let c = 3; c <= Math.min(maxC, 20); c++) {
+    const { score, hits } = scoreStart(c);
+    if (score > bestRowScore) {
+      bestRowScore = score;
+      bestRowHits = hits;
+      bestRowCol = c;
     }
   }
-  return bestCol;
+
+  // Prefer E (4) when it's close
+  const prefE = 4;
+  const sE = scoreStart(prefE);
+  if (sE.hits >= 2 && sE.score >= bestRowScore - 1) return prefE;
+
+  if (bestRowHits >= 2) return bestRowCol;
+  return headerCol;
 }
 
 function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
