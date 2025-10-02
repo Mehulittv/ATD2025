@@ -13,8 +13,8 @@ import { getFilePath } from "./files";
 
 export const attendanceRouter = Router();
 
-function detectFirstDayCol(ws: XLSX.WorkSheet, _dataRowIndex: number): number {
-  // Use the sheet's header 1..31 numeric sequence as the single source of truth
+function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
+  // 1) Find the sheet header where a long 1..31 numeric sequence starts
   const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
   const maxC = range.e.c;
   let headerCol = 3; // default to D if not found
@@ -38,7 +38,45 @@ function detectFirstDayCol(ws: XLSX.WorkSheet, _dataRowIndex: number): number {
     }
     if (bestLen >= 10) break;
   }
-  return headerCol;
+
+  // 2) Refine per employee: scan a small window starting at headerCol to align actual value columns
+  const scoreStart = (c: number) => {
+    let score = 0;
+    let hits = 0;
+    for (let d = 0; d < 10 && c + d <= maxC; d++) {
+      const v = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v).toUpperCase();
+      const cls = classifyCell(v);
+      if (cls.present || cls.absent || cls.weekoff) {
+        score += 3;
+        hits++;
+      } else if (!v) {
+        score += 1; // blanks are okay
+      } else if (v.length > 3) {
+        score -= 3; // likely not daily cell (e.g., text columns)
+      }
+      // Peek OT row below for numeric hints
+      const otV = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex + 1, c: c + d })]?.v);
+      if (otV && !Number.isNaN(Number.parseFloat(otV))) score += 1;
+    }
+    return { score, hits };
+  };
+
+  const windowStart = Math.max(3, headerCol - 1);
+  const windowEnd = Math.min(maxC, headerCol + 6);
+  let bestCol = headerCol;
+  let bestScoreVal = -1e9;
+  let bestHits = 0;
+  for (let c = windowStart; c <= windowEnd; c++) {
+    const { score, hits } = scoreStart(c);
+    if (score > bestScoreVal) {
+      bestScoreVal = score;
+      bestHits = hits;
+      bestCol = c;
+    }
+  }
+  // Require at least minimal hits; otherwise fall back to headerCol
+  if (bestHits < 1) return headerCol;
+  return bestCol;
 }
 
 function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
