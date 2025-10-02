@@ -13,14 +13,13 @@ import { getFilePath } from "./files";
 
 export const attendanceRouter = Router();
 
-function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
+function detectFirstDayCol(ws: XLSX.WorkSheet, _dataRowIndex: number): number {
+  // Use the sheet's header 1..31 numeric sequence as the single source of truth
   const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
   const maxC = range.e.c;
-
-  // 1) Header-based detection
-  let headerCol = 3;
+  let headerCol = 3; // default to D if not found
   let bestLen = -1;
-  const rowLimit = Math.min(range.e.r, 80);
+  const rowLimit = Math.min(range.e.r, 100);
   for (let r = 0; r <= rowLimit; r++) {
     for (let c = 0; c <= maxC; c++) {
       let len = 0;
@@ -39,44 +38,6 @@ function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
     }
     if (bestLen >= 10) break;
   }
-
-  // 2) Row-based scoring for this employee row
-  const scoreStart = (c: number) => {
-    let score = 0;
-    let hits = 0;
-    for (let d = 0; d < 10 && c + d <= maxC; d++) {
-      const v = normalizeStr(ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v).toUpperCase();
-      const cls = classifyCell(v);
-      if (cls.present || cls.absent || cls.weekoff) {
-        score += 3;
-        hits++;
-      } else if (!v) {
-        score += 1;
-      } else if (v.length > 3) {
-        score -= 3;
-      }
-    }
-    return { score, hits };
-  };
-
-  let bestRowCol = 3;
-  let bestRowScore = -1e9;
-  let bestRowHits = 0;
-  for (let c = 3; c <= Math.min(maxC, 20); c++) {
-    const { score, hits } = scoreStart(c);
-    if (score > bestRowScore) {
-      bestRowScore = score;
-      bestRowHits = hits;
-      bestRowCol = c;
-    }
-  }
-
-  // Prefer E (4) when it's close
-  const prefE = 4;
-  const sE = scoreStart(prefE);
-  if (sE.hits >= 2 && sE.score >= bestRowScore - 1) return prefE;
-
-  if (bestRowHits >= 2) return bestRowCol;
   return headerCol;
 }
 
