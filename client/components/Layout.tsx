@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export default function Layout({ children }: PropsWithChildren) {
   const location = useLocation();
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+    <div className="min-h-screen bg-[#2A176A]">
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 items-center justify-between">
           <Link to="/" className="font-extrabold tracking-tight text-xl">

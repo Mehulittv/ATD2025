@@ -13,20 +13,106 @@ import { getFilePath } from "./files";
 
 export const attendanceRouter = Router();
 
+function detectFirstDayCol(ws: XLSX.WorkSheet, dataRowIndex: number): number {
+  // 1) Find the sheet header where a long 1..31 numeric sequence starts
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  const maxC = range.e.c;
+  let headerCol = 3; // default to D if not found
+  let bestLen = -1;
+  const rowLimit = Math.min(range.e.r, 100);
+  for (let r = 0; r <= rowLimit; r++) {
+    for (let c = 0; c <= maxC; c++) {
+      let len = 0;
+      for (let d = 1; d <= 31 && c + d - 1 <= maxC; d++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: c + d - 1 })];
+        const raw = normalizeStr(cell?.v);
+        const n = Number.parseInt(raw, 10);
+        if (!Number.isNaN(n) && n === d) len++;
+        else break;
+      }
+      if (len > bestLen) {
+        bestLen = len;
+        headerCol = c;
+      }
+      if (bestLen >= 10) break;
+    }
+    if (bestLen >= 10) break;
+  }
+
+  // 2) Refine per employee: scan a small window starting at headerCol to align actual value columns
+  const scoreStart = (c: number) => {
+    let score = 0;
+    let hits = 0;
+    for (let d = 0; d < 10 && c + d <= maxC; d++) {
+      const v = normalizeStr(
+        ws[XLSX.utils.encode_cell({ r: dataRowIndex, c: c + d })]?.v,
+      ).toUpperCase();
+      const cls = classifyCell(v);
+      if (cls.present || cls.absent || cls.weekoff) {
+        score += 3;
+        hits++;
+      } else if (!v) {
+        score += 1; // blanks are okay
+      } else if (v.length > 3) {
+        score -= 3; // likely not daily cell (e.g., text columns)
+      }
+      // Peek OT row below for numeric hints
+      const otV = normalizeStr(
+        ws[XLSX.utils.encode_cell({ r: dataRowIndex + 1, c: c + d })]?.v,
+      );
+      if (otV && !Number.isNaN(Number.parseFloat(otV))) score += 1;
+    }
+    return { score, hits };
+  };
+
+  const windowStart = Math.max(3, headerCol - 1);
+  const windowEnd = Math.min(maxC, headerCol + 6);
+  let bestCol = headerCol;
+  let bestScoreVal = -1e9;
+  let bestHits = 0;
+  for (let c = windowStart; c <= windowEnd; c++) {
+    const { score, hits } = scoreStart(c);
+    if (score > bestScoreVal) {
+      bestScoreVal = score;
+      bestHits = hits;
+      bestCol = c;
+    }
+  }
+  // Require at least minimal hits; otherwise fall back to headerCol
+  if (bestHits < 1) return headerCol;
+  return bestCol;
+}
+
 function getDailyStatuses(ws: XLSX.WorkSheet, rowIndex: number): DayStatus[] {
   const days: DayStatus[] = [];
+  const startCol = detectFirstDayCol(ws, rowIndex);
   for (let day = 1; day <= 31; day++) {
-    const c = 3 + (day - 1); // D..AH
+    const c = startCol + (day - 1); // dynamic start for day 1
     const cell = ws[XLSX.utils.encode_cell({ r: rowIndex, c })];
     const cls = classifyCell(cell?.v);
     let code: DayStatus["code"] = "";
     if (cls.weekoff) code = "WO";
     else if (cls.absent) code = "A";
     else if (cls.present) code = "P";
-    const otMatch = normalizeStr(cell?.v)
-      .toUpperCase()
-      .match(/OT\s*([0-9]+(?:\.[0-9]+)?)?/);
-    const ot = otMatch && otMatch[1] ? parseFloat(otMatch[1]) : 0;
+
+    // Try to read OT from the same cell (e.g., "P OT 2")
+    const sameCell = normalizeStr(cell?.v).toUpperCase();
+    const otInlineMatch = sameCell.match(/OT\s*([0-9]+(?:\.[0-9]+)?)?/);
+    let ot =
+      otInlineMatch && otInlineMatch[1] ? parseFloat(otInlineMatch[1]) : 0;
+
+    // If not present inline, look for OT value on the next row (rowIndex + 1) in the same day column
+    if (!ot || Number.isNaN(ot)) {
+      // Fallback: try next row (assumed OT row for the same employee), parse any numeric value
+      const nextCell = ws[XLSX.utils.encode_cell({ r: rowIndex + 1, c })];
+      const nextVal = normalizeStr(nextCell?.v).toUpperCase();
+      const m = nextVal.match(/([0-9]+(?:\.[0-9]+)?)/);
+      if (m) {
+        const parsedNext = Number.parseFloat(m[1]);
+        if (!Number.isNaN(parsedNext)) ot = parsedNext;
+      }
+    }
+
     days.push({ day, code, ot: Number.isNaN(ot) ? 0 : ot });
   }
   return days;
@@ -98,7 +184,13 @@ function classifyCell(raw: any) {
   if (s === "P" || s.startsWith("P/") || s === "PR" || s === "PRESENT")
     present = 1;
   else if (s === "A" || s === "ABSENT") absent = 1;
-  else if (s === "WO" || s === "W/O" || s === "WEEKOFF" || s === "WEEK OFF")
+  else if (
+    s === "W" ||
+    s === "WO" ||
+    s === "W/O" ||
+    s === "WEEKOFF" ||
+    s === "WEEK OFF"
+  )
     weekoff = 1;
 
   return { present, absent, weekoff, ot } as const;
@@ -110,9 +202,10 @@ function summarizeRow(ws: XLSX.WorkSheet, rowIndex: number): AttendanceSummary {
   let absent = 0;
   let weekoff = 0;
   let otHours = 0;
-  // daily values start from D (3) through AH (33) => 31 days
-  const lastDayCol = Math.min(range.e.c, 33);
-  for (let c = 3; c <= lastDayCol; c++) {
+  // daily values start dynamically based on detected daily pattern at the employee row
+  const startCol = detectFirstDayCol(ws, rowIndex);
+  const lastDayCol = Math.min(range.e.c, startCol + 30);
+  for (let c = startCol; c <= lastDayCol; c++) {
     const cell = ws[XLSX.utils.encode_cell({ r: rowIndex, c })];
     const cls = classifyCell(cell?.v);
     present += cls.present;

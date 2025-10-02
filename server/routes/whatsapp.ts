@@ -143,12 +143,10 @@ whatsappRouter.post("/image-url", async (req, res) => {
     const url = `${base}/i/${id}.${ext}`;
     res.json({ url });
   } catch (e: any) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to create image URL",
-        detail: e?.message || String(e),
-      });
+    res.status(500).json({
+      error: "Failed to create image URL",
+      detail: e?.message || String(e),
+    });
   }
 });
 
@@ -160,7 +158,7 @@ function formatTo91(raw: any) {
 }
 
 // Send WhatsApp using provider that expects a URL-only 'file' parameter
-whatsappRouter.post("/send", upload.none(), async (req, res) => {
+whatsappRouter.post("/send", async (req, res) => {
   try {
     const { endpoint, appkey, authkey, to, message } = req.body || {};
     if (!endpoint || !appkey || !authkey || !to || !message) {
@@ -178,13 +176,11 @@ whatsappRouter.post("/send", upload.none(), async (req, res) => {
       let buffer: Buffer | null = null;
       let originalName = "attendance.png";
 
-      if (req.file && req.file.buffer) {
-        buffer = Buffer.from(
-          req.file.buffer.buffer,
-          req.file.buffer.byteOffset,
-          req.file.buffer.byteLength,
-        );
-        originalName = req.file.originalname || originalName;
+      if ((req as any).file && (req as any).file.buffer) {
+        // If a multipart/form-data file was sent and multer parsed it earlier
+        const f = (req as any).file;
+        buffer = Buffer.from(f.buffer);
+        originalName = f.originalname || originalName;
       } else if ((req.body as any)?.imageDataUrl) {
         const d = dataUrlToBuffer(String((req.body as any).imageDataUrl));
         buffer = d.buffer;
@@ -227,11 +223,9 @@ whatsappRouter.post("/send", upload.none(), async (req, res) => {
 
     res.json({ ok: true, response: result.body });
   } catch (e: any) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to send WhatsApp",
-        detail: e?.message || String(e),
-      });
+    res.status(500).json({
+      error: "Failed to send WhatsApp",
+      detail: e?.message || String(e),
+    });
   }
 });

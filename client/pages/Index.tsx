@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import {
@@ -30,6 +31,7 @@ import {
 export default function Index() {
   const captureRef = useRef<HTMLDivElement | null>(null);
   const [sending, setSending] = useState(false);
+  const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const [sendingProgress, setSendingProgress] = useState(0);
   useEffect(() => {
     if (!sending) {
@@ -319,7 +321,31 @@ export default function Index() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Search Employee</CardTitle>
+          <div className="flex items-center gap-4">
+            <CardTitle>Search Employee</CardTitle>
+            <RadioGroup
+              className="flex flex-row items-center gap-4"
+              value={layout}
+              onValueChange={(v) =>
+                setLayout(v as any as "horizontal" | "vertical")
+              }
+            >
+              <label
+                htmlFor="layout-h"
+                className="inline-flex items-center gap-2 text-xs text-foreground/80"
+              >
+                <RadioGroupItem id="layout-h" value="horizontal" />
+                <span>Horizontal</span>
+              </label>
+              <label
+                htmlFor="layout-v"
+                className="inline-flex items-center gap-2 text-xs text-foreground/80"
+              >
+                <RadioGroupItem id="layout-v" value="vertical" />
+                <span>Vertical</span>
+              </label>
+            </RadioGroup>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -367,7 +393,7 @@ export default function Index() {
               <label className="mb-2 block text-sm font-medium">
                 Total employees
               </label>
-              <div className="rounded-md border p-3 text-3xl font-extrabold tracking-tight bg-card">
+              <div className="rounded-md border p-3 text-3xl font-extrabold tracking-tight bg-card text-center">
                 {totalEmployees}
               </div>
             </div>
@@ -407,7 +433,13 @@ export default function Index() {
           <div ref={captureRef} className="space-y-4">
             {summaryQuery.data && (
               <>
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div
+                  className={
+                    layout === "vertical"
+                      ? "grid gap-4 grid-cols-1"
+                      : "grid gap-4 sm:grid-cols-3"
+                  }
+                >
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm text-muted-foreground">
@@ -415,7 +447,7 @@ export default function Index() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div className="font-bold text-base">
+                      <div className="font-bold text-base text-center">
                         {summaryQuery.data.employee.number}
                       </div>
                     </CardContent>
@@ -427,7 +459,7 @@ export default function Index() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div className="font-bold text-base">
+                      <div className="font-bold text-base text-center">
                         {summaryQuery.data.employee.name}
                       </div>
                     </CardContent>
@@ -439,14 +471,20 @@ export default function Index() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm">
-                      <div className="font-bold text-base">
+                      <div className="font-bold text-base text-center">
                         {summaryQuery.data.details?.department || "-"}
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-7">
+                <div
+                  className={
+                    layout === "vertical"
+                      ? "grid gap-4 grid-cols-1"
+                      : "grid gap-4 sm:grid-cols-7"
+                  }
+                >
                   <StatCard
                     title="Present"
                     value={summaryQuery.data.summary.present}
@@ -463,6 +501,11 @@ export default function Index() {
                     color="bg-amber-500"
                   />
                   <StatCard
+                    title="Minus"
+                    value={summaryQuery.data.summary.minus ?? 0}
+                    color="bg-fuchsia-500"
+                  />
+                  <StatCard
                     title="ATD"
                     value={summaryQuery.data.summary.atd}
                     color="bg-blue-500"
@@ -473,11 +516,6 @@ export default function Index() {
                     color="bg-cyan-500"
                   />
                   <StatCard
-                    title="Minus"
-                    value={summaryQuery.data.summary.minus ?? 0}
-                    color="bg-fuchsia-500"
-                  />
-                  <StatCard
                     title="Kitchen"
                     value={summaryQuery.data.summary.kitchen ?? 0}
                     color="bg-indigo-500"
@@ -486,6 +524,128 @@ export default function Index() {
               </>
             )}
 
+            {dailyQuery.data && (
+              <div className="mt-6 rounded-md border overflow-hidden bg-[#2A176A]">
+                <div className="flex items-center justify-center bg-emerald-500 text-white font-semibold px-4 py-2">
+                  <span className="text-base sm:text-lg">
+                    {parseMonthYear(
+                      files.find((f) => f.filename === file)?.originalName,
+                    )?.label || ""}
+                  </span>
+                </div>
+                <div className="px-4 py-3">
+                  {layout !== "vertical" ? (
+                    <>
+                      <div className="grid grid-cols-7 gap-2 text-xs font-bold text-white mb-2">
+                        <div className="text-center">Sun</div>
+                        <div className="text-center">Mon</div>
+                        <div className="text-center">Tue</div>
+                        <div className="text-center">Wed</div>
+                        <div className="text-center">Thu</div>
+                        <div className="text-center">Fri</div>
+                        <div className="text-center">Sat</div>
+                      </div>
+                      {(() => {
+                        const meta = parseMonthYear(
+                          files.find((f) => f.filename === file)?.originalName,
+                        );
+                        const cells = buildCalendarCells(
+                          dailyQuery.data!.days,
+                          meta?.year,
+                          meta?.monthIndex,
+                        );
+                        const rows = [] as (typeof cells)[number][][];
+                        for (let i = 0; i < cells.length; i += 7)
+                          rows.push(cells.slice(i, i + 7));
+                        return rows.map((row, ri) => (
+                          <div key={ri} className="grid grid-cols-7 gap-2 mb-2">
+                            {row.map((cell, ci) => (
+                              <div
+                                key={ci}
+                                className="min-h-[76px] rounded-md border bg-card"
+                              >
+                                {cell ? (
+                                  <div className="p-2 space-y-1 text-center">
+                                    <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
+                                      {cell.day}
+                                    </div>
+                                    <div
+                                      className={
+                                        "text-sm font-bold " +
+                                        codeColor(cell.code)
+                                      }
+                                    >
+                                      {cell.code === "WO"
+                                        ? "W"
+                                        : cell.code || ""}
+                                    </div>
+                                    <div className="text-xs font-bold">
+                                      {cell.ot > 0 ? cell.ot : ""}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="p-2" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ));
+                      })()}
+                    </>
+                  ) : (
+                    (() => {
+                      const meta = parseMonthYear(
+                        files.find((f) => f.filename === file)?.originalName,
+                      );
+                      const days = [...dailyQuery.data!.days].sort(
+                        (a, b) => a.day - b.day,
+                      );
+                      return (
+                        <div className="space-y-2">
+                          {days.map((d) => (
+                            <div
+                              key={d.day}
+                              className="rounded-md border bg-card p-3 flex items-center justify-between gap-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80 min-w-[28px] text-center">
+                                  {d.day}
+                                </div>
+                                <div className="text-sm font-semibold text-white/90">
+                                  {meta &&
+                                  typeof meta.year === "number" &&
+                                  typeof meta.monthIndex === "number"
+                                    ? new Date(
+                                        meta.year,
+                                        meta.monthIndex,
+                                        d.day,
+                                      ).toLocaleDateString(undefined, {
+                                        weekday: "long",
+                                      })
+                                    : `Day ${d.day}`}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div
+                                  className={
+                                    "text-base font-bold " + codeColor(d.code)
+                                  }
+                                >
+                                  {d.code === "WO" ? "W" : d.code || ""}
+                                </div>
+                                <div className="text-xs font-bold">
+                                  {d.ot > 0 ? d.ot : ""}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
+              </div>
+            )}
             {summaryQuery.data?.details && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Card>
@@ -495,8 +655,8 @@ export default function Index() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm">
-                    <div>{summaryQuery.data.details.mobile1 || "-"}</div>
-                    <div>{summaryQuery.data.details.mobile2 || ""}</div>
+                    <div>{summaryQuery.data?.details?.mobile1 || "-"}</div>
+                    <div>{summaryQuery.data?.details?.mobile2 || ""}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -507,78 +667,10 @@ export default function Index() {
                   </CardHeader>
                   <CardContent className="text-sm">
                     <div className="whitespace-pre-wrap">
-                      {summaryQuery.data.details.presentAddress || "-"}
+                      {summaryQuery.data?.details?.presentAddress || "-"}
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            )}
-
-            {dailyQuery.data && (
-              <div className="mt-6 rounded-md border overflow-hidden">
-                <div className="flex items-center justify-between bg-emerald-500 text-white font-semibold px-4 py-2">
-                  <span>Monthly Calendar</span>
-                  <span className="text-white/90 text-sm">
-                    {parseMonthYear(
-                      files.find((f) => f.filename === file)?.originalName,
-                    )?.label || ""}
-                  </span>
-                </div>
-                <div className="px-4 py-3">
-                  <div className="grid grid-cols-7 gap-2 text-xs font-medium text-muted-foreground mb-2">
-                    <div className="text-center">Sun</div>
-                    <div className="text-center">Mon</div>
-                    <div className="text-center">Tue</div>
-                    <div className="text-center">Wed</div>
-                    <div className="text-center">Thu</div>
-                    <div className="text-center">Fri</div>
-                    <div className="text-center">Sat</div>
-                  </div>
-                  {(() => {
-                    const meta = parseMonthYear(
-                      files.find((f) => f.filename === file)?.originalName,
-                    );
-                    const cells = buildCalendarCells(
-                      dailyQuery.data!.days,
-                      meta?.year,
-                      meta?.monthIndex,
-                    );
-                    const rows = [] as (typeof cells)[number][][];
-                    for (let i = 0; i < cells.length; i += 7)
-                      rows.push(cells.slice(i, i + 7));
-                    return rows.map((row, ri) => (
-                      <div key={ri} className="grid grid-cols-7 gap-2 mb-2">
-                        {row.map((cell, ci) => (
-                          <div
-                            key={ci}
-                            className="min-h-[76px] rounded-md border bg-card"
-                          >
-                            {cell ? (
-                              <div className="p-2 space-y-1">
-                                <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
-                                  {cell.day}
-                                </div>
-                                <div
-                                  className={
-                                    "text-xs font-medium " +
-                                    codeColor(cell.code)
-                                  }
-                                >
-                                  {cell.code || ""}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {cell.ot ? `OT: ${cell.ot}` : ""}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="p-2" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ));
-                  })()}
-                </div>
               </div>
             )}
           </div>
@@ -596,15 +688,23 @@ export default function Index() {
       </Card>
       {sending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-[90%] max-w-sm rounded-lg border bg-card p-6 shadow-lg text-center" role="status" aria-live="polite">
-            <div className="mb-3 text-base font-semibold">Sending to WhatsApp...</div>
+          <div
+            className="w-[90%] max-w-sm rounded-lg border bg-card p-6 shadow-lg text-center"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="mb-3 text-base font-semibold">
+              Sending to WhatsApp...
+            </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-150"
                 style={{ width: `${Math.min(sendingProgress, 100)}%` }}
               />
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">Preparing image and contacting provider</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Preparing image and contacting provider
+            </div>
           </div>
         </div>
       )}
@@ -684,7 +784,7 @@ function StatCard({
         <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-extrabold tracking-tight">
+        <div className="text-3xl font-extrabold tracking-tight text-center">
           <span
             className={
               color + " inline-block h-3 w-3 rounded-full align-middle mr-2"
