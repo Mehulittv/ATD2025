@@ -514,59 +514,101 @@ export default function Index() {
                   </span>
                 </div>
                 <div className="px-4 py-3">
-                  <div className="grid grid-cols-7 gap-2 text-xs font-bold text-white mb-2">
-                    <div className="text-center">Sun</div>
-                    <div className="text-center">Mon</div>
-                    <div className="text-center">Tue</div>
-                    <div className="text-center">Wed</div>
-                    <div className="text-center">Thu</div>
-                    <div className="text-center">Fri</div>
-                    <div className="text-center">Sat</div>
-                  </div>
-                  {(() => {
-                    const meta = parseMonthYear(
-                      files.find((f) => f.filename === file)?.originalName,
-                    );
-                    const cells = buildCalendarCells(
-                      dailyQuery.data!.days,
-                      meta?.year,
-                      meta?.monthIndex,
-                    );
-                    const rows = [] as (typeof cells)[number][][];
-                    for (let i = 0; i < cells.length; i += 7)
-                      rows.push(cells.slice(i, i + 7));
-                    return rows.map((row, ri) => (
-                      <div key={ri} className="grid grid-cols-7 gap-2 mb-2">
-                        {row.map((cell, ci) => (
-                          <div
-                            key={ci}
-                            className="min-h-[76px] rounded-md border bg-card"
-                          >
-                            {cell ? (
-                              <div className="p-2 space-y-1 text-center">
-                                <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
-                                  {cell.day}
+                  {layout !== "vertical" ? (
+                    <>
+                      <div className="grid grid-cols-7 gap-2 text-xs font-bold text-white mb-2">
+                        <div className="text-center">Sun</div>
+                        <div className="text-center">Mon</div>
+                        <div className="text-center">Tue</div>
+                        <div className="text-center">Wed</div>
+                        <div className="text-center">Thu</div>
+                        <div className="text-center">Fri</div>
+                        <div className="text-center">Sat</div>
+                      </div>
+                      {(() => {
+                        const meta = parseMonthYear(
+                          files.find((f) => f.filename === file)?.originalName,
+                        );
+                        const cells = buildCalendarCells(
+                          dailyQuery.data!.days,
+                          meta?.year,
+                          meta?.monthIndex,
+                        );
+                        const rows = [] as (typeof cells)[number][][];
+                        for (let i = 0; i < cells.length; i += 7)
+                          rows.push(cells.slice(i, i + 7));
+                        return rows.map((row, ri) => (
+                          <div key={ri} className="grid grid-cols-7 gap-2 mb-2">
+                            {row.map((cell, ci) => (
+                              <div
+                                key={ci}
+                                className="min-h-[76px] rounded-md border bg-card"
+                              >
+                                {cell ? (
+                                  <div className="p-2 space-y-1 text-center">
+                                    <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80">
+                                      {cell.day}
+                                    </div>
+                                    <div
+                                      className={
+                                        "text-sm font-bold " +
+                                        codeColor(cell.code)
+                                      }
+                                    >
+                                      {cell.code === "WO" ? "W" : (cell.code || "")}
+                                    </div>
+                                    <div className="text-xs font-bold">
+                                      {cell.ot > 0 ? cell.ot : ""}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="p-2" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ));
+                      })()}
+                    </>
+                  ) : (
+                    (() => {
+                      const meta = parseMonthYear(
+                        files.find((f) => f.filename === file)?.originalName,
+                      );
+                      const days = [...dailyQuery.data!.days].sort(
+                        (a, b) => a.day - b.day,
+                      );
+                      return (
+                        <div className="space-y-2">
+                          {days.map((d) => (
+                            <div
+                              key={d.day}
+                              className="rounded-md border bg-card p-3 flex items-center justify-between gap-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold bg-muted text-foreground/80 min-w-[28px] text-center">
+                                  {d.day}
                                 </div>
-                                <div
-                                  className={
-                                    "text-sm font-bold " +
-                                    codeColor(cell.code)
-                                  }
-                                >
-                                  {cell.code === "WO" ? "W" : (cell.code || "")}
-                                </div>
-                                <div className="text-xs font-bold">
-                                  {cell.ot > 0 ? cell.ot : ""}
+                                <div className="text-sm font-semibold text-white/90">
+                                  {meta && typeof meta.year === "number" && typeof meta.monthIndex === "number"
+                                    ? new Date(meta.year, meta.monthIndex, d.day).toLocaleDateString(undefined, { weekday: "long" })
+                                    : `Day ${d.day}`}
                                 </div>
                               </div>
-                            ) : (
-                              <div className="p-2" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ));
-                  })()}
+                              <div className="text-right">
+                                <div className={"text-base font-bold " + codeColor(d.code)}>
+                                  {d.code === "WO" ? "W" : (d.code || "")}
+                                </div>
+                                <div className="text-xs font-bold">
+                                  {d.ot > 0 ? d.ot : ""}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()
+                  )}
                 </div>
               </div>
             )}
